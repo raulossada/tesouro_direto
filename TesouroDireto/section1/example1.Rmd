@@ -1,0 +1,191 @@
+```{r knitsetup, echo=FALSE, results='hide', warning=FALSE, message=FALSE, cache=FALSE}
+opts_knit$set(base.dir='./', fig.path='', out.format='md')
+opts_chunk$set(prompt=TRUE, comment='', results='markup')
+# See yihui.name/knitr/options for more Knitr options.
+##### Put other setup R code here
+
+
+# end setup chunk
+```
+
+# Cálculo
+
+Inicialmente eu decido comprar um **Título Prefixado**.
+
+Assim, decido investir um certo valor, numa certa data.
+
+```{r, s01, eval=TRUE, echo=TRUE}
+# Tesouro Prefixado 2020 (LTN)	01/01/2020	8,92	R$32,51	R$812,88
+# Tesouro Prefixado 2023 (LTN)	01/01/2023	9,96	R$35,88	R$598,14
+
+# Valor Investido
+valor_investido <- 598.14;
+
+# Data da Compra
+data_compra <- "2017-07-25";
+```
+
+O título que eu decidi comprar possui uma **Taxa de Rendimento** e uma **Data de Vencimento**.
+
+```{r, s02, eval=TRUE, echo=TRUE}
+# Taxa de Rendimento do Papel na Compra (%a.a.)
+taxa_rendimento <- 9.96/100;
+
+# Data do Vencimento
+data_vencimento <- "2023-01-01";
+```
+
+Agora, suponha que eu decida resgatar o título apenas na data de vencimento.
+
+```{r, s03, eval=TRUE, echo=TRUE}
+library("bizdays");
+
+create.calendar(name="Brazil/ANBIMA", 
+                holidays=holidaysANBIMA, 
+                weekdays=c("saturday", "sunday") );
+
+qt_dias_uteis <- bizdays(from=data_compra, to=data_vencimento, cal="Brazil/ANBIMA");
+
+resgate_valor_bruto <- valor_investido * (1 + taxa_rendimento)^(qt_dias_uteis/252);
+resgate_valor_bruto <- round(x=resgate_valor_bruto, digits=0);
+```
+
+Assim o valor bruto que irei receber é de R$ `r resgate_valor_bruto`
+
+## Taxa de Custódia
+
+Porém, nem tudo são flores. Ou seja, eu preciso pagar algumas taxas.
+
+E uma das taxas que eu preciso pagar é a **Taxa de Custódia**.
+
+```{r, s04, eval=TRUE, echo=TRUE}
+taxa_custodia <- 0.3/100;
+
+dataMais2 <- as.Date(x=data_compra, format="%Y-%m-%d")+2;
+dataMais2 <- as.character(dataMais2);
+
+qt_dias_corridos2 <- bizdays(from=dataMais2, to=data_vencimento, cal="actual");
+
+valor_custodia <- taxa_custodia * ( (qt_dias_corridos2)/365 ) * 
+  (valor_investido + resgate_valor_bruto)/2;
+valor_custodia <- round(x=valor_custodia, digits=2);
+```
+
+Assim o valor referente à taxa de custódia que eu vou ter que pagar será de R$ `r valor_custodia`
+
+## Diferença Bruta
+
+A diferença bruta será:
+
+```{r, s05, eval=TRUE, echo=TRUE}
+diferenca_bruta <- resgate_valor_bruto - valor_investido;
+```
+
+## Imposto de Renda
+
+```{r, s06, eval=TRUE, echo=TRUE}
+ir <- (diferenca_bruta - valor_custodia) * (0.15);
+ir <- round(x=ir, digits=2);
+```
+
+O valor do imposto de renda que eu vou precisar pagar será de R$ `r ir`
+
+## Rendimento Líquido
+
+Após descontar os impostos e taxas temos que o rendimento líquido será:
+
+```{r, s07, eval=TRUE, echo=TRUE}
+rendimento_liquido <- diferenca_bruta - valor_custodia - ir;
+```
+
+Valor líquido do rendimento: R$ `r rendimento_liquido`
+
+## Valor Líquido do Resgate
+
+```{r, s08, eval=TRUE, echo=TRUE}
+resgate_valor_liquido <- valor_investido + rendimento_liquido;
+```
+
+Valor líquido do resgate: R$ `r resgate_valor_liquido`
+
+## Taxa de Rendimento Líquida
+
+```{r, s09, eval=TRUE, echo=TRUE}
+taxa_rendimento_liquida <- ( (resgate_valor_liquido / valor_investido)^(252/qt_dias_uteis) 
+                             ) - 1;
+
+taxa_rendimento_liquida <- taxa_rendimento_liquida * 100;
+
+taxa_rendimento_liquida <- round(x=taxa_rendimento_liquida, digits=2);
+```
+
+Taxa de rendimento líquida: `r taxa_rendimento_liquida`% a.a.
+
+
+***
+
+## Taxa de administração 1
+
+1o. O valor da administração na entrada
+
+```{r, s10, eval=TRUE, echo=TRUE}
+taxa_admin <- 0.5/100;
+
+valor_admin_entrada <- valor_investido * taxa_admin;
+valor_admin_entrada <- round(x=valor_admin_entrada, digits=2);
+```
+
+Valor da administração na entrada: R$ `r valor_admin_entrada`
+
+## Taxa de administração 2
+
+1o. O valor da administração no resgate
+
+```{r, s11, eval=TRUE, echo=TRUE}
+valor_admin_resgate <- taxa_admin * ( (qt_dias_corridos2-365)/365 ) * ( (valor_investido+valor_admin_entrada+resgate_valor_bruto)/2 );
+```
+
+Valor da administração no resgate: R$ `r valor_admin_resgate`
+
+## Rendimento Líquido 2
+
+Após descontar os impostos e taxas temos que o rendimento líquido será:
+
+```{r, s12, eval=TRUE, echo=TRUE}
+rendimento_liquido <- diferenca_bruta - valor_custodia - ir - valor_admin_resgate;
+```
+
+Valor líquido do rendimento: R$ `r rendimento_liquido`
+
+## Valor Líquido do Resgate 2
+
+```{r, s13, eval=TRUE, echo=TRUE}
+resgate_valor_liquido <- valor_investido + rendimento_liquido;
+```
+
+Valor líquido do resgate: R$ `r resgate_valor_liquido`
+
+
+
+
+
+```{r, s14, eval=FALSE, echo=FALSE}
+if( (B11>365), (  B9*((B12-365)/365) * ((B15+B20)/2)  ), 0){}
+B9 : Taxa de administracao  
+  
+B11: dias corridos entre a compra e o vencimento
+B12: dias corridos entre a compra e a venda
+
+B15: Valor investido líquido = bruto+admin na entrada
+B20: Valor bruto do resgate
+
+
+(( B9* ( (B12-365)/365) ) * ((B15+B20)/2))
+
+
+taxa_admin * ( (1981-365)/365 ) * ( (valor_investido+valor_admin_entrada+resgate_valor_bruto)/2 );
+
+(resgate_valor_bruto - valor_investido)*taxa_admin
+
+```
+
