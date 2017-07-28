@@ -35,6 +35,8 @@ Agora, suponha que eu decida resgatar o título apenas na data de vencimento.
 ```r
 > library("bizdays");
 > 
+> # Cria o calendário
+> 
 > create.calendar(name="Brazil/ANBIMA", 
 +                 holidays=holidaysANBIMA, 
 +                 weekdays=c("saturday", "sunday") );
