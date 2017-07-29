@@ -1,7 +1,7 @@
-setwd("C:/Users/raul/Documents/GitHub/tesouro_direto/TesouroDireto");
+setwd("C:/Users/raul/Documents/GitHub/tesouro_direto");
 
 library("Rgitbook");
 
-buildGitbook();
+buildGitbook2();
 
 openGitbook();
