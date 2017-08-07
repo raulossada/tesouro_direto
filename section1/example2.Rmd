@@ -8,9 +8,69 @@ opts_chunk$set(prompt=TRUE, comment='', results='markup')
 # end setup chunk
 ```
 # example 2
+```{r}
+library("bizdays");
 
-Ha!
+# Cria o calendário
+create.calendar(name="Brazil/ANBIMA", 
+                holidays=holidaysANBIMA, 
+                weekdays=c("saturday", "sunday") );
+```
 
-Can't touch it!!! Hama Hama Hama 
+```{r}
+data_compra <- as.Date("2017-08-04");
+# data_vencim <- as.Date("2020-01-01");
+data_vencim <- as.Date("2020-01-06");
 
-XD
+datas <- seq.Date(from=data_compra, to=data_vencim, by="day");
+
+tabela1 <- data.frame(datas);
+
+tabela1$dia_semana <- weekdays(x=tabela1$datas);
+
+tabela1$dia_util <- is.bizday(dates=tabela1$datas,  cal="Brazil/ANBIMA");
+tabela1$dia_util <- as.integer(tabela1$dia_util);
+
+# 04/08/2017 15:45
+# Tesouro Prefixado 2020 (LTN)	01/01/2020	8,55	R$32,87	R$821,75
+
+valor_compra <- 821.75;
+tx_rend <- 8.55/100;
+
+tabela1$valor_dia <- NA;
+tabela1$valor_dia[1] <- valor_compra;
+
+tx_admin <- 0.3/100;
+tabela1$valor_admin <- NA;
+tabela1$valor_admin [1] <- 0;
+
+for(ii in 2:nrow(tabela1) ){
+  
+  if(tabela1$dia_util[ii]==1){
+    tabela1$valor_dia[ii] <- tabela1$valor_dia[ii-1] * (1 + tx_rend)^(1/252);
+    
+    tabela1$valor_admin[ii] <- tabela1$valor_dia[ii] * ( ((1+tx_admin)^(1/252)) - 1 );
+    
+  } else{
+    tabela1$valor_dia[ii] <- tabela1$valor_dia[ii-1];
+    
+    tabela1$valor_admin[ii] <- 0;
+    
+  }
+
+}
+
+
+```
+
+```{r}
+
+# R$ 2,47 + R$ 3,83 = 6.3
+sum(tabela1$valor_admin[1:881]);
+
+sum(tabela1$valor_admin[1:357]);
+
+sum(tabela1$valor_admin[358:853]);
+
+# https://www.euqueroinvestir.com/taxa-de-administracao-fundos-de-investimentos/
+```
